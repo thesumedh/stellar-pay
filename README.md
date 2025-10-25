@@ -1,8 +1,12 @@
 # 🌟 StellarPay - Revolutionizing Creator Micropayments
 
-**Winner of Stellar Hackathon 2024** 🏆
+
 
 StellarPay is a cutting-edge micropayment platform that empowers creators to monetize digital content through instant, low-cost transactions on the Stellar blockchain.
+
+
+<img width="1885" height="798" alt="image" src="https://github.com/user-attachments/assets/09e49612-ee8f-41ba-a3e2-9f840bacc818" />
+
 
 ## 🚀 Why StellarPay?
 
