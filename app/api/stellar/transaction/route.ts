@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+
+
 export async function POST(request: NextRequest) {
   try {
     const { xdr } = await request.json()
@@ -8,19 +10,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Transaction XDR required" }, { status: 400 })
     }
 
-    // For demo purposes, return a mock successful transaction
-    const mockHash = "a" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    // Dynamic import to avoid Next.js compatibility issues
+    const StellarSdk = await import('stellar-sdk')
+    const server = new StellarSdk.Server("https://horizon-testnet.stellar.org")
+    const networkPassphrase = "Test SDF Network ; September 2015"
+
+    const transaction = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase)
+    const result = await server.submitTransaction(transaction)
 
     return NextResponse.json({
       success: true,
-      transactionHash: mockHash,
-      ledger: Math.floor(Math.random() * 1000000),
+      transactionHash: result.hash,
+      ledger: result.ledger,
       timestamp: new Date().toISOString(),
     })
   } catch (error: any) {
     console.error("Transaction submission error:", error)
     return NextResponse.json({ 
-      error: "Transaction failed" 
+      error: error.message || "Transaction failed" 
     }, { status: 500 })
   }
 }

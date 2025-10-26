@@ -172,23 +172,8 @@ export default function DemoPage() {
       }
     } catch (error) {
       console.error('Purchase error:', error)
-      // Since wallet transaction went through, treat as success
-      setReaderBalance(prev => prev - price)
-      setWriterEarnings(prev => prev + price)
-      setUnlockedArticles(prev => [...prev, articleId])
-      
-      const newTransaction = {
-        id: 'demo-' + Date.now(),
-        articleId,
-        articleTitle: articles.find(a => a.id === articleId)?.title,
-        amount: price,
-        timestamp: new Date().toISOString(),
-        type: 'purchase',
-        hash: 'demo-hash-' + Date.now()
-      }
-      setTransactions(prev => [newTransaction, ...prev])
-      
-      alert(`Article unlocked! Transaction completed via Freighter wallet.`)
+      const errorMsg = error?.message || error?.toString() || 'Transaction failed'
+      alert(`Purchase failed: ${errorMsg}`)
     }
     
     setLoading({...loading, [`article_${articleId}`]: false})

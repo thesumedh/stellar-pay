@@ -23,6 +23,12 @@ export const signTransaction = async (xdr, network = "TESTNET") => {
     throw new Error("Freighter not installed.");
   }
 
+  // Verify Freighter is on correct network
+  const currentNetwork = await window.freighterApi.getNetwork();
+  if (currentNetwork.network !== network) {
+    throw new Error(`Please switch Freighter to ${network} in wallet settings`);
+  }
+
   const result = await window.freighterApi.signTransaction(xdr, { network });
   if (result.error) {
     throw new Error(result.error);

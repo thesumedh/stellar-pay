@@ -1,21 +1,49 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+
+
 export async function POST(request: NextRequest) {
   try {
     const { senderPublicKey, recipientPublicKey, amount, memo } = await request.json()
 
-    // For demo purposes, return a mock XDR
-    const mockXdr = "AAAAAgAAAABYEG9Q7+5VGKBhFQObYQC7wqaW8Qx8VhZvVqiMM7rCqgAAAGQAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAABhYm9ydAAAAAABAAAAAQAAAABYEG9Q7+5VGKBhFQObYQC7wqaW8Qx8VhZvVqiMM7rCqgAAAAEAAAAAWBBvUO/uVRigYRUDm2EAu8KmlvEMfFYWb1aojDO6wqoAAAAAAAAAAACYloAAAAAAAAAAATOsyqoAAABAhJy0YKJjphyVWwqUDzqMzXaUUhiPThnCg0oIXNn2mxAlFgTqPX7/wZBfY2jCr6qCoAoIGgGFzgUcmQ=="
+    if (!senderPublicKey || !recipientPublicKey || !amount) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+
+    // Dynamic import to avoid Next.js compatibility issues
+    const StellarSdk = await import('stellar-sdk')
+    const server = new StellarSdk.Horizon.Server("https://horizon-testnet.stellar.org")
+    const networkPassphrase = "Test SDF Network ; September 2015"
+
+    const accountResponse = await server.accounts().accountId(senderPublicKey).call()
+    const senderAccount = new StellarSdk.Account(senderPublicKey, accountResponse.sequence)
+
+    const transaction = new StellarSdk.TransactionBuilder(senderAccount, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase,
+    })
+      .addOperation(
+        StellarSdk.Operation.payment({
+          destination: recipientPublicKey,
+          asset: StellarSdk.Asset.native(),
+          amount: amount.toString(),
+        }),
+      )
+      .addMemo(StellarSdk.Memo.text(memo || "StellarPay Payment"))
+      .setTimeout(300)
+      .build()
+
+    const xdr = transaction.toXDR()
 
     return NextResponse.json({
-      xdr: mockXdr,
-      fee: "100",
-      networkPassphrase: "Test SDF Network ; September 2015",
+      xdr,
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase,
     })
   } catch (error: any) {
     console.error("Transaction build error:", error)
     return NextResponse.json({ 
-      error: "Failed to build transaction" 
+      error: error.message || "Failed to build transaction" 
     }, { status: 500 })
   }
 }
