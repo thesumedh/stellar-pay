@@ -82,7 +82,21 @@ export default function DemoPage() {
       }
       
       setAddress(result.address)
-      setReaderBalance(10.00)
+      
+      // Fund the account automatically
+      try {
+        const fundRes = await fetch('/api/stellar/fund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicKey: result.address })
+        })
+        if (fundRes.ok) {
+          setReaderBalance(10000.00) // Testnet friendbot gives 10,000 XLM
+        }
+      } catch (fundError) {
+        console.log('Auto-funding failed:', fundError)
+        setReaderBalance(0)
+      }
     } catch (err) {
       alert(err.message)
     }
@@ -90,10 +104,6 @@ export default function DemoPage() {
   }
 
   const purchaseArticle = async (articleId: number, price: number) => {
-    if (!address) {
-      await handleConnect()
-      return
-    }
 
     if (!window.freighterApi) {
       alert("Freighter wallet not found. Please install Freighter.")
@@ -103,6 +113,19 @@ export default function DemoPage() {
     setLoading({...loading, [`article_${articleId}`]: true})
     
     try {
+      // First, fund the account if needed
+      console.log('Checking/funding account...')
+      const fundRes = await fetch('/api/stellar/fund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicKey: address })
+      })
+      
+      if (!fundRes.ok) {
+        const fundError = await fundRes.text()
+        console.log('Fund response:', fundError)
+      }
+      
       console.log('Building transaction...')
       const buildRes = await fetch('/api/stellar/build-transaction', {
         method: 'POST',
