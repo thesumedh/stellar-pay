@@ -74,7 +74,7 @@ export default function LandingPage() {
                 size="lg"
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 text-lg px-8 font-semibold shadow-lg shadow-cyan-500/30"
               >
-                Explore Demo <ArrowRight className="w-5 h-5 ml-2" />
+                Live Demo <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
             <Button

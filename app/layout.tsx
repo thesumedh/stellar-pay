@@ -24,6 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/stellar-freighter-api/5.0.0/index.min.js'></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
