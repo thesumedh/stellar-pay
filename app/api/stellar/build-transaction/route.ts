@@ -1,34 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
-import * as StellarSdk from "stellar-sdk"
 
-const server = new StellarSdk.Server("https://horizon-testnet.stellar.org")
-const networkPassphrase = StellarSdk.Networks.TESTNET_NETWORK_PASSPHRASE
+
 
 export async function POST(request: NextRequest) {
   try {
     const { senderPublicKey, recipientPublicKey, amount, memo } = await request.json()
 
-    // Validate required fields
     if (!senderPublicKey || !recipientPublicKey || !amount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Validate Stellar public keys
-    if (!StellarSdk.StrKey.isValidEd25519PublicKey(senderPublicKey)) {
-      return NextResponse.json({ error: "Invalid sender public key" }, { status: 400 })
-    }
-    
-    if (!StellarSdk.StrKey.isValidEd25519PublicKey(recipientPublicKey)) {
-      return NextResponse.json({ error: "Invalid recipient public key" }, { status: 400 })
-    }
+    // Dynamic import to avoid Next.js compatibility issues
+    const StellarSdk = await import('stellar-sdk')
+    const server = new StellarSdk.Horizon.Server("https://horizon-testnet.stellar.org")
+    const networkPassphrase = "Test SDF Network ; September 2015"
 
-    // Validate amount
-    const numAmount = parseFloat(amount)
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
-    }
-
-    const senderAccount = await server.accounts().accountId(senderPublicKey).call()
+    const accountResponse = await server.accounts().accountId(senderPublicKey).call()
+    const senderAccount = new StellarSdk.Account(senderPublicKey, accountResponse.sequence)
 
     const transaction = new StellarSdk.TransactionBuilder(senderAccount, {
       fee: StellarSdk.BASE_FEE,
@@ -41,7 +29,7 @@ export async function POST(request: NextRequest) {
           amount: amount.toString(),
         }),
       )
-      .addMemo(StellarSdk.Memo.text(memo || "StellarPay Micropayment"))
+      .addMemo(StellarSdk.Memo.text(memo || "StellarPay Payment"))
       .setTimeout(300)
       .build()
 
@@ -53,22 +41,9 @@ export async function POST(request: NextRequest) {
       networkPassphrase,
     })
   } catch (error: any) {
-    console.error("Transaction build error:", error.message)
-    
-    if (error.response?.status === 404) {
-      return NextResponse.json({ 
-        error: "Account not found. Please ensure the account is funded." 
-      }, { status: 404 })
-    }
-    
-    if (error.message?.includes('insufficient')) {
-      return NextResponse.json({ 
-        error: "Insufficient balance for transaction" 
-      }, { status: 400 })
-    }
-    
+    console.error("Transaction build error:", error)
     return NextResponse.json({ 
-      error: "Failed to build transaction. Please try again." 
+      error: error.message || "Failed to build transaction" 
     }, { status: 500 })
   }
 }

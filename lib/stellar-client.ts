@@ -2,7 +2,7 @@ import * as StellarSdk from "stellar-sdk"
 
 // Initialize Stellar SDK for testnet
 const server = new StellarSdk.Server("https://horizon-testnet.stellar.org")
-const networkPassphrase = StellarSdk.Networks.TESTNET_NETWORK_PASSPHRASE
+const networkPassphrase = "Test SDF Network ; September 2015"
 
 export interface StellarAccount {
   publicKey: string

@@ -1,4 +1,5 @@
 import * as StellarSdk from "stellar-sdk"
+import { debugFreighterNetwork } from "./network-debug"
 
 export interface FreighterWallet {
   publicKey: string
@@ -44,8 +45,23 @@ export async function signTransactionWithFreighter(xdr: string): Promise<string>
   }
 
   try {
+    // Debug and verify Freighter network
+    await debugFreighterNetwork()
+    
+    const { network, networkPassphrase } = await (window as any).freighter.getNetwork()
+    console.log("🔍 Transaction Debug:")
+    console.log("Freighter network:", network)
+    console.log("Freighter passphrase:", networkPassphrase)
+    console.log("Expected network: TESTNET")
+    console.log("Expected passphrase:", "Test SDF Network ; September 2015")
+    
+    if (network !== "TESTNET") {
+      throw new Error("Please switch Freighter to Testnet in wallet settings")
+    }
+
     const signedXdr = await (window as any).freighter.signTransaction(xdr, {
-      network: StellarSdk.Networks.TESTNET_NETWORK_PASSPHRASE,
+      network: "TESTNET",
+      networkPassphrase: "Test SDF Network ; September 2015",
     })
     return signedXdr
   } catch (error: any) {
@@ -82,9 +98,15 @@ export async function sendPaymentWithFreighter(
 
     const { xdr } = await buildResponse.json()
 
-    // Step 3: Sign with Freighter
+    // Step 3: Verify network and sign with Freighter
+    const { network, networkPassphrase } = await (window as any).freighter.getNetwork()
+    if (network !== "TESTNET") {
+      throw new Error("Please switch Freighter to Testnet in wallet settings")
+    }
+
     const signedXdr = await (window as any).freighter.signTransaction(xdr, {
-      network: StellarSdk.Networks.TESTNET_NETWORK_PASSPHRASE,
+      network: "TESTNET",
+      networkPassphrase: "Test SDF Network ; September 2015",
     })
 
     // Step 4: Submit to Stellar network via backend
